@@ -23,8 +23,8 @@ class IRepositorioConocimiento(ABC):
     def obtener_reglas(self) -> list[ReglaInferencia]: ...
 
     @abstractmethod
-    def obtener_verosimilitudes(self) -> dict[tuple[int, int], float]:
-        """(id_hipotesis, id_hecho) -> P(hecho | hipótesis)."""
+    def obtener_pesos(self) -> dict[tuple[int, int], float]:
+        """Pesos hecho–hipótesis: (id_hipotesis, id_hecho) -> P(hecho | hipótesis)."""
 
     @abstractmethod
     def guardar_hipotesis(self, hipotesis: Hipotesis) -> None: ...

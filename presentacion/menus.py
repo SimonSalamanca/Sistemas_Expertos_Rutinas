@@ -50,7 +50,8 @@ class _ConsultaConocimiento:
         h = next((x for x in hipotesis if x.codigo == codigo), None)
         if h is None:
             raise ErrorNegocio(f"La hipótesis {codigo} no existe.")
-        vistas.mostrar_hechos_de_hipotesis(h, self.conocimiento.reglas())
+        vistas.mostrar_hechos_de_hipotesis(h, self.conocimiento.reglas(),
+                                           self.conocimiento.pesos_de(h))
 
     def ver_diagnosticos(self) -> None:
         vistas.mostrar_consultas(self.diagnostico.todas_las_consultas(), con_usuario=True)
@@ -94,6 +95,7 @@ class MenuUsuarioFinal(MenuBase):
         if n.isdigit() and 1 <= int(n) <= len(consultas):
             c = consultas[int(n) - 1]
             vistas.mostrar_rutina(c.hipotesis, c.regla, c.respuestas, c.probabilidad)
+            vistas.mostrar_ranking(c.ranking)
 
 
 class MenuExperto(_ConsultaConocimiento, MenuBase):

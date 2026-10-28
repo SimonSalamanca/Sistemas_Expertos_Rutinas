@@ -71,7 +71,7 @@ Verificación opcional en pgAdmin (Query Tool sobre "sistema_experto_rutina"):
       UNION ALL SELECT 'hipotesis', COUNT(*) FROM hipotesis
       UNION ALL SELECT 'regla_inferencia', COUNT(*) FROM regla_inferencia
       UNION ALL SELECT 'hecho_hipotesis', COUNT(*) FROM hecho_hipotesis
-      UNION ALL SELECT 'probabilidad_condicional', COUNT(*) FROM probabilidad_condicional;
+      UNION ALL SELECT 'peso_hecho_hipotesis', COUNT(*) FROM peso_hecho_hipotesis;
 
 Valores esperados: 5 / 15 / 26 / 30 / 118 / 390
 (o simplemente:  python probar_conexion.py)

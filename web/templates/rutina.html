@@ -16,4 +16,21 @@
     <a class="boton boton-primario" href="{{ url_for('diagnostico') }}">Hacer mi diagnóstico</a>
   </aside>
 </div>
+
+{% if pesos %}
+<h2 class="titulo-bloque">Pesos hecho–hipótesis de {{ h.codigo }}</h2>
+<div class="tabla-contenedor tarjeta">
+  <table class="tabla">
+    <thead><tr><th>Hecho</th><th>Variable</th><th>Valor</th><th>Peso P(hecho | {{ h.codigo }})</th></tr></thead>
+    <tbody>
+      {% for e, p in pesos %}
+        <tr>
+          <td class="codigo">{{ e.codigo }}</td><td>{{ e.variable }}</td><td>{{ e.valor }}</td>
+          <td class="numero">{{ '%.4f' | format(p) | replace('.', ',') }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 {% endblock %}

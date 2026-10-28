@@ -19,4 +19,20 @@
     <p class="regla">{{ c.regla }}</p>
   </aside>
 </div>
+
+{% if c.ranking %}
+<h2 class="titulo-bloque">Ranking del diagnóstico (top {{ c.ranking | length }})</h2>
+<section class="tarjeta">
+  <ol class="ranking">
+    {% for h, p in c.ranking %}
+      <li class="{{ 'ranking-primero' if loop.first }}">
+        <span class="ranking-pos">{{ loop.index }}</span>
+        <a href="{{ url_for('rutina', codigo=h.codigo) }}"><span class="codigo">{{ h.codigo }}</span> {{ h.perfil() }}</a>
+        <span class="barra-prob pequena"><span style="width: {{ (p * 100) | round(1) }}%"></span></span>
+        <strong>{{ p | pct }}</strong>
+      </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
 {% endblock %}

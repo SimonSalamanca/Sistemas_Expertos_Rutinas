@@ -1,9 +1,9 @@
 """Motor de inferencia bayesiano del sistema experto.
 
 Cada rutina (hipótesis H) tiene una probabilidad a priori P(H) y, para
-cada hecho E (opción de respuesta), una verosimilitud P(E | H). Ambas se
-leen de la base de conocimiento y se derivan de las reglas del árbol de
-decisión.
+cada hecho E (opción de respuesta), un peso hecho–hipótesis, que es la
+verosimilitud P(E | H). Ambos se leen de la base de conocimiento y se
+derivan de las reglas del árbol de decisión.
 
 Con cada respuesta el motor actualiza la probabilidad de todas las rutinas
 con el teorema de Bayes:
@@ -24,23 +24,23 @@ from negocio.entidades import (BaseHechos, Hecho, Hipotesis, Pregunta,
                                ReglaInferencia, ResultadoInferencia)
 from negocio.excepciones import ErrorNegocio, SinConclusionError
 
-ALTERNATIVAS = 2   # rutinas adicionales que se muestran junto a la recomendada
+ALTERNATIVAS = 4   # rutinas adicionales: con la recomendada forman el top 5
 
 
 class MotorInferencia:
 
     def __init__(self, preguntas: list[Pregunta], reglas: list[ReglaInferencia],
                  hipotesis: list[Hipotesis],
-                 verosimilitudes: dict[tuple[int, int], float]) -> None:
+                 pesos: dict[tuple[int, int], float]) -> None:
         if not reglas:
             raise ErrorNegocio("La base de conocimiento no tiene reglas cargadas.")
-        if not verosimilitudes:
-            raise ErrorNegocio("La base de conocimiento no tiene probabilidades cargadas.")
+        if not pesos:
+            raise ErrorNegocio("La base de conocimiento no tiene pesos hecho–hipótesis cargados.")
         self._preguntas = sorted(preguntas, key=lambda p: p.orden)
         self._reglas = reglas
         self._hipotesis = sorted(hipotesis, key=lambda h: h.codigo)
-        # (id_hipotesis, id_hecho) -> P(hecho | hipótesis)
-        self._verosimilitud = verosimilitudes
+        # Pesos hecho–hipótesis: (id_hipotesis, id_hecho) -> P(hecho | hipótesis)
+        self._pesos = pesos
 
     # --- Aplicabilidad de las preguntas ---------------------------------
 
@@ -81,7 +81,7 @@ class MotorInferencia:
         for h in self._hipotesis:
             p = h.probabilidad_previa
             for e in hechos:
-                p *= self._verosimilitud.get((h.id, e.id), 0.0)
+                p *= self._pesos.get((h.id, e.id), 0.0)
             conjuntas.append((h, p))
         evidencia = sum(p for _, p in conjuntas)       # P(E1..En)
         if evidencia <= 0:

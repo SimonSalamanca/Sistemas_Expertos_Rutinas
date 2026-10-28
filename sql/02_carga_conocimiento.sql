@@ -2,7 +2,7 @@
 -- Carga del conocimiento del experto humano
 -- 5 preguntas, 15 hechos, 26 hipótesis, 30 reglas de inferencia y
 -- 118 filas en hecho_hipotesis. Al final se derivan las probabilidades
--- (26 previas y 390 filas en probabilidad_condicional).
+-- (26 previas y 390 filas en peso_hecho_hipotesis).
 -- Ejecutar después de 01_esquema.sql
 -- =====================================================================
 
@@ -302,4 +302,4 @@ UNION ALL SELECT 'hecho', COUNT(*) FROM hecho
 UNION ALL SELECT 'hipotesis', COUNT(*) FROM hipotesis
 UNION ALL SELECT 'regla_inferencia', COUNT(*) FROM regla_inferencia
 UNION ALL SELECT 'hecho_hipotesis', COUNT(*) FROM hecho_hipotesis
-UNION ALL SELECT 'probabilidad_condicional', COUNT(*) FROM probabilidad_condicional;
+UNION ALL SELECT 'peso_hecho_hipotesis', COUNT(*) FROM peso_hecho_hipotesis;

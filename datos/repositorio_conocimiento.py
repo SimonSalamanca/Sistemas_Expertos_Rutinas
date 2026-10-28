@@ -76,16 +76,16 @@ class RepositorioConocimiento(IRepositorioConocimiento):
             r.hechos.append(_a_hecho(f))
         return list(reglas.values())
 
-    def obtener_verosimilitudes(self) -> dict[tuple[int, int], float]:
+    def obtener_pesos(self) -> dict[tuple[int, int], float]:
         with self._db.transaccion() as cur:
-            cur.execute("""SELECT id_hipotesis, id_hecho, probabilidad
-                             FROM probabilidad_condicional""")
-            return {(f["id_hipotesis"], f["id_hecho"]): float(f["probabilidad"])
+            cur.execute("""SELECT id_hipotesis, id_hecho, peso
+                             FROM peso_hecho_hipotesis""")
+            return {(f["id_hipotesis"], f["id_hecho"]): float(f["peso"])
                     for f in cur.fetchall()}
 
     @staticmethod
     def _recalcular(cur: psycopg.Cursor) -> None:
-        """Vuelve a derivar P(H) y P(E | H) después de cambiar el conocimiento."""
+        """Vuelve a derivar P(H) y los pesos hecho–hipótesis después de cambiar el conocimiento."""
         cur.execute("SELECT recalcular_probabilidades()")
 
     def guardar_hipotesis(self, h: Hipotesis) -> None:

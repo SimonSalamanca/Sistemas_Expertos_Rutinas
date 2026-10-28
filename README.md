@@ -67,7 +67,8 @@ pregunta 1──N hecho N──M hipotesis
 - **hipotesis**: las 26 rutinas posibles.
 - **hecho_hipotesis**: rompe el muchos a muchos. Cada fila indica que un hecho sustenta una hipótesis dentro de una regla. Tiene 118 filas.
 - **regla_inferencia**: agrupa los hechos de un mismo camino del árbol (R01 a R30). Sus hechos se unen con Y. Una hipótesis puede tener varias reglas; H01 y H02 tienen tres cada una.
-- **probabilidad_condicional**: verosimilitud P(hecho | hipótesis), 26 × 15 = 390 filas. Junto con `hipotesis.probabilidad_previa` forma el modelo bayesiano.
+- **peso_hecho_hipotesis**: el peso de cada hecho para cada hipótesis, que es la verosimilitud P(hecho | hipótesis); 26 × 15 = 390 filas. Junto con `hipotesis.probabilidad_previa` forma el modelo bayesiano.
+- **ranking_consulta**: las 5 rutinas más probables de cada consulta, con su posición y probabilidad.
 - **consulta** y **respuesta_pregunta**: guardan cada diagnóstico (rutina, probabilidad a posteriori y camino del árbol) y las respuestas del usuario, que forman su base de hechos.
 
 El motor también decide qué preguntar. Solo muestra una pregunta si alguna regla que todavía es posible necesita un hecho de esa pregunta. Por eso el cuestionario es adaptativo sin reglas de navegación aparte.
@@ -77,7 +78,7 @@ El motor también decide qué preguntar. Solo muestra una pregunta si alguna reg
 El sistema razona con probabilidades. Cada rutina H tiene:
 
 - **P(H)**, probabilidad a priori: reglas de H / total de reglas. H01 y H02 tienen 3/30 (tres caminos del árbol llegan a ellas) y las demás 1/30.
-- **P(E | H)**, verosimilitud de cada respuesta E. Se deriva de las reglas con la confiabilidad `c` de cada pregunta (0,95 por defecto):
+- **P(E | H)**, peso hecho–hipótesis (verosimilitud) de cada respuesta E, guardado en `peso_hecho_hipotesis`. Se deriva de las reglas con la confiabilidad `c` de cada pregunta (0,95 por defecto):
   - si las reglas de H evalúan la pregunta: `P(E|H) = c · (reglas de H con E / reglas de H con la pregunta) + (1 − c) / opciones`
   - si no la evalúan: `P(E|H) = 1 / opciones` (la respuesta no informa sobre H).
 
@@ -87,7 +88,7 @@ Con cada respuesta se aplica el teorema de Bayes a las 26 rutinas:
 P(H | E1..En) = P(H) · Π P(Ei | H)  /  Σk P(Hk) · Π P(Ei | Hk)
 ```
 
-El resultado es la rutina con mayor probabilidad a posteriori, las 2 siguientes como alternativas y la evolución de la probabilidad respuesta por respuesta. La regla (camino del árbol) que coincide con las respuestas se muestra como explicación.
+El resultado es la rutina con mayor probabilidad a posteriori, las 4 siguientes como alternativas (top 5) y la evolución de la probabilidad respuesta por respuesta. La regla (camino del árbol) que coincide con las respuestas se muestra como explicación.
 
 Las probabilidades se calculan en PostgreSQL con la función `recalcular_probabilidades()`. Se ejecuta al cargar el conocimiento y cada vez que el ingeniero crea o elimina una hipótesis o una regla, así el motor no se modifica (RNF-04). Para cambiar la confianza en una pregunta:
 

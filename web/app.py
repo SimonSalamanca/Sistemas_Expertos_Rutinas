@@ -157,7 +157,10 @@ def rutina(codigo: str):
         flash(f"La rutina {codigo} no existe.", "error")
         return redirect(url_for("catalogo"))
     reglas = [r for r in servicio_conocimiento.reglas() if r.hipotesis.codigo == codigo]
-    return render_template("rutina.html", h=h, reglas=reglas)
+    # Los pesos hecho–hipótesis solo los ven experto, ingeniero y administrador
+    pesos = (servicio_conocimiento.pesos_de(h)
+             if usuario_actual().rol in ROLES_CONOCIMIENTO else [])
+    return render_template("rutina.html", h=h, reglas=reglas, pesos=pesos)
 
 
 @app.route("/mis-rutinas")

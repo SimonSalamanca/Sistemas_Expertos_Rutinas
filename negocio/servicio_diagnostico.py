@@ -49,7 +49,7 @@ class ServicioDiagnostico:
         motor = MotorInferencia(self._conocimiento.obtener_preguntas(),
                                 self._conocimiento.obtener_reglas(),
                                 self._conocimiento.obtener_hipotesis(),
-                                self._conocimiento.obtener_verosimilitudes())
+                                self._conocimiento.obtener_pesos())
         return SesionDiagnostico(motor)
 
     def registrar(self, id_usuario: int, sesion: SesionDiagnostico,

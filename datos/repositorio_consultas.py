@@ -25,6 +25,12 @@ class RepositorioConsultas(IRepositorioConsultas):
                 INSERT INTO respuesta_pregunta (id_consulta, id_pregunta, id_hecho)
                 VALUES (%s, %s, %s)""",
                 [(id_consulta, h.id_pregunta, h.id) for h in base.hechos()])
+            # Ranking: la recomendada (posición 1) y las alternativas
+            ranking = [(resultado.hipotesis, resultado.probabilidad)] + resultado.alternativas
+            cur.executemany("""
+                INSERT INTO ranking_consulta (id_consulta, posicion, id_hipotesis, probabilidad)
+                VALUES (%s, %s, %s, %s)""",
+                [(id_consulta, i, h.id, round(p, 5)) for i, (h, p) in enumerate(ranking, 1)])
         return id_consulta
 
     def listar(self, id_usuario: int | None = None) -> list[Consulta]:
@@ -53,10 +59,27 @@ class RepositorioConsultas(IRepositorioConsultas):
                  WHERE %(id)s::int IS NULL OR c.id_usuario = %(id)s::int
                  ORDER BY c.fecha DESC, c.id_consulta DESC""", {"id": id_usuario})
             filas = cur.fetchall()
+
+            # Ranking guardado de cada consulta (top 5), en orden de posición
+            cur.execute("""
+                SELECT rc.id_consulta, rc.probabilidad, hi.id_hipotesis, hi.codigo,
+                       hi.nivel, hi.equipo, hi.objetivo, hi.fase, hi.descripcion_rutina
+                  FROM ranking_consulta rc
+                  JOIN hipotesis hi ON hi.id_hipotesis = rc.id_hipotesis
+                 WHERE rc.id_consulta = ANY(%s)
+                 ORDER BY rc.id_consulta, rc.posicion""", ([f["id_consulta"] for f in filas],))
+            rankings: dict[int, list[tuple[Hipotesis, float]]] = {}
+            for r in cur.fetchall():
+                rankings.setdefault(r["id_consulta"], []).append(
+                    (Hipotesis(r["id_hipotesis"], r["codigo"], r["nivel"], r["equipo"],
+                               r["objetivo"], r["fase"], r["descripcion_rutina"]),
+                     float(r["probabilidad"])))
+
         return [Consulta(
                     id=f["id_consulta"], fecha=f["fecha"], usuario=f["nombre"], regla=f["regla"],
                     hipotesis=Hipotesis(f["id_hipotesis"], f["codigo"], f["nivel"], f["equipo"],
                                         f["objetivo"], f["fase"], f["descripcion_rutina"]),
                     respuestas=list(f["respuestas"]),
-                    probabilidad=float(f["probabilidad"]))
+                    probabilidad=float(f["probabilidad"]),
+                    ranking=rankings.get(f["id_consulta"], []))
                 for f in filas]

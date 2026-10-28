@@ -75,6 +75,15 @@ def mostrar_resultado(resultado: ResultadoInferencia, respuestas: list[Hecho]) -
                             titulo="Otras rutinas posibles"))
 
 
+def mostrar_ranking(ranking: list[tuple[Hipotesis, float]]) -> None:
+    """Ranking guardado de una consulta (top 5)."""
+    if not ranking:
+        return
+    filas = [[str(i), h.codigo, h.perfil(), _pct(p)] for i, (h, p) in enumerate(ranking, 1)]
+    console.print(tabla(["#", "Rutina", "Perfil", "Probabilidad"], filas,
+                        titulo="Ranking del diagnóstico (top 5)"))
+
+
 def mostrar_consultas(consultas: list[Consulta], con_usuario: bool = False) -> None:
     if not consultas:
         console.print("[dim]No hay diagnósticos registrados.[/]")
@@ -107,10 +116,17 @@ def mostrar_reglas(reglas: list[ReglaInferencia]) -> None:
                         titulo=f"Reglas de inferencia ({len(reglas)})"))
 
 
-def mostrar_hechos_de_hipotesis(hipotesis: Hipotesis, reglas: list[ReglaInferencia]) -> None:
+def mostrar_hechos_de_hipotesis(hipotesis: Hipotesis, reglas: list[ReglaInferencia],
+                                pesos: list[tuple[Hecho, float]] | None = None) -> None:
     propias = [r for r in reglas if r.hipotesis.codigo == hipotesis.codigo]
     filas = [[r.codigo, h.codigo, h.variable, h.valor] for r in propias for h in r.hechos]
     console.print(Panel(f"{hipotesis.perfil()}\n\n{hipotesis.descripcion_rutina}",
                         title=f"[bold]{hipotesis.codigo}[/]", border_style=ACENTO))
     console.print(tabla(["Regla", "Hecho", "Variable", "Valor"], filas,
                         titulo=f"{len(propias)} regla(s) y {len(filas)} hecho(s) en hecho_hipotesis"))
+    if pesos:
+        console.print(tabla(["Hecho", "Variable", "Valor", "Peso P(hecho | hipótesis)"],
+                            [[h.codigo, h.variable, h.valor, f"{p:.4f}".replace(".", ",")]
+                             for h, p in pesos],
+                            titulo=f"Pesos hecho–hipótesis de {hipotesis.codigo} "
+                                   f"(P a priori {_pct(hipotesis.probabilidad_previa)})"))

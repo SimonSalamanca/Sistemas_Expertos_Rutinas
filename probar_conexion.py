@@ -33,7 +33,7 @@ def main() -> int:
     # 2) La base tiene las tablas y el conocimiento cargado
     esperados = {"pregunta": 5, "hecho": 15, "hipotesis": 26,
                  "regla_inferencia": 30, "hecho_hipotesis": 118,
-                 "probabilidad_condicional": 390}
+                 "peso_hecho_hipotesis": 390}
     try:
         with psycopg.connect(host=config.DB_HOST, port=config.DB_PORT, dbname=config.DB_NAME,
                              user=config.DB_USER, password=config.DB_PASSWORD,

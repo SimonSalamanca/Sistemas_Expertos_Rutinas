@@ -11,16 +11,19 @@
 --
 -- Modelo probabilístico (bayesiano):
 --   hipotesis.probabilidad_previa   P(H)      probabilidad a priori
---   probabilidad_condicional        P(E | H)  verosimilitud de cada hecho
+--   peso_hecho_hipotesis.peso       P(E | H)  peso de cada hecho para cada
+--                                   hipótesis (verosimilitud)
 --   pregunta.confiabilidad          qué tanto refleja cada respuesta el
 --                                   camino real del árbol
---   Ambas tablas se derivan de las reglas con recalcular_probabilidades().
+--   P(H) y los pesos se derivan de las reglas con recalcular_probabilidades().
+--
+-- Cada consulta guarda su ranking (top 5) en ranking_consulta.
 -- =====================================================================
 
 SET client_encoding = 'UTF8';
 
-DROP TABLE IF EXISTS respuesta_pregunta, consulta, usuario,
-                     probabilidad_condicional,
+DROP TABLE IF EXISTS ranking_consulta, respuesta_pregunta, consulta, usuario,
+                     peso_hecho_hipotesis, probabilidad_condicional,
                      hecho_hipotesis, regla_inferencia, hipotesis,
                      hecho, pregunta CASCADE;
 DROP FUNCTION IF EXISTS recalcular_probabilidades();
@@ -100,24 +103,25 @@ CREATE TABLE hecho_hipotesis (
     CONSTRAINT uq_hh_regla_hecho UNIQUE (id_regla, id_hecho)
 );
 
--- Verosimilitud P(hecho | hipótesis): probabilidad de que un usuario al que
--- le corresponde la rutina H responda ese hecho. Para cada hipótesis, las
--- probabilidades de las opciones de una misma pregunta suman 1.
-CREATE TABLE probabilidad_condicional (
-    id_probabilidad  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_hipotesis     INT          NOT NULL,
-    id_hecho         INT          NOT NULL,
-    probabilidad     NUMERIC(9,8) NOT NULL CHECK (probabilidad BETWEEN 0 AND 1),
-    CONSTRAINT fk_pc_hipotesis FOREIGN KEY (id_hipotesis)
-        REFERENCES hipotesis(id_hipotesis) ON DELETE CASCADE,
-    CONSTRAINT fk_pc_hecho FOREIGN KEY (id_hecho)
+-- Pesos hecho–hipótesis: para cada par (hecho, hipótesis), el peso es la
+-- verosimilitud P(hecho | hipótesis), es decir, la probabilidad de que un
+-- usuario al que le corresponde la rutina H responda ese hecho. Para cada
+-- hipótesis, los pesos de las opciones de una misma pregunta suman 1.
+CREATE TABLE peso_hecho_hipotesis (
+    id_peso       INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_hecho      INT          NOT NULL,
+    id_hipotesis  INT          NOT NULL,
+    peso          NUMERIC(9,8) NOT NULL CHECK (peso BETWEEN 0 AND 1),
+    CONSTRAINT fk_peso_hecho FOREIGN KEY (id_hecho)
         REFERENCES hecho(id_hecho) ON DELETE CASCADE,
-    CONSTRAINT uq_pc_hipotesis_hecho UNIQUE (id_hipotesis, id_hecho)
+    CONSTRAINT fk_peso_hipotesis FOREIGN KEY (id_hipotesis)
+        REFERENCES hipotesis(id_hipotesis) ON DELETE CASCADE,
+    CONSTRAINT uq_peso_hecho_hipotesis UNIQUE (id_hecho, id_hipotesis)
 );
 
 -- Deriva las probabilidades a partir de las reglas (caminos del árbol):
 --   P(H)     = reglas de H / total de reglas
---   P(E | H) = c * (reglas de H que usan E / reglas de H que evalúan la pregunta)
+--   peso(E, H) = P(E | H) = c * (reglas de H que usan E / reglas de H que evalúan la pregunta)
 --              + (1 - c) / opciones de la pregunta
 --              donde c es la confiabilidad de la pregunta.
 --   Si ninguna regla de H evalúa la pregunta, P(E | H) = 1 / opciones
@@ -136,9 +140,9 @@ BEGIN
            (SELECT COUNT(*) FROM regla_inferencia r
              WHERE r.id_hipotesis = h.id_hipotesis)::NUMERIC / total_reglas END;
 
-    DELETE FROM probabilidad_condicional;
+    DELETE FROM peso_hecho_hipotesis;
 
-    INSERT INTO probabilidad_condicional (id_hipotesis, id_hecho, probabilidad)
+    INSERT INTO peso_hecho_hipotesis (id_hipotesis, id_hecho, peso)
     WITH conteo AS (
         SELECT hi.id_hipotesis, he.id_hecho, he.id_pregunta,
                (SELECT COUNT(*) FROM hecho_hipotesis hh
@@ -206,4 +210,21 @@ CREATE TABLE respuesta_pregunta (
     CONSTRAINT fk_respuesta_hecho FOREIGN KEY (id_hecho, id_pregunta)
         REFERENCES hecho(id_hecho, id_pregunta),
     CONSTRAINT uq_respuesta_pregunta UNIQUE (id_consulta, id_pregunta)
+);
+
+-- Ranking de cada consulta: las 5 rutinas más probables con su probabilidad
+-- a posteriori al momento del diagnóstico (posición 1 = la recomendada).
+CREATE TABLE ranking_consulta (
+    id_ranking    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_consulta   INT          NOT NULL,
+    posicion      SMALLINT     NOT NULL CHECK (posicion >= 1),
+    id_hipotesis  INT          NOT NULL,
+    probabilidad  NUMERIC(6,5) NOT NULL CHECK (probabilidad BETWEEN 0 AND 1),
+    CONSTRAINT fk_ranking_consulta FOREIGN KEY (id_consulta)
+        REFERENCES consulta(id_consulta) ON DELETE CASCADE,
+    -- si el ingeniero elimina una hipótesis, sale de los rankings guardados
+    CONSTRAINT fk_ranking_hipotesis FOREIGN KEY (id_hipotesis)
+        REFERENCES hipotesis(id_hipotesis) ON DELETE CASCADE,
+    CONSTRAINT uq_ranking_posicion UNIQUE (id_consulta, posicion),
+    CONSTRAINT uq_ranking_hipotesis UNIQUE (id_consulta, id_hipotesis)
 );

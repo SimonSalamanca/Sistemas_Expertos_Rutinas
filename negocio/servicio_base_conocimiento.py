@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from negocio.entidades import Hipotesis, Pregunta, ReglaInferencia
+from negocio.entidades import Hecho, Hipotesis, Pregunta, ReglaInferencia
 from negocio.excepciones import ErrorNegocio
 from negocio.repositorios import IRepositorioConocimiento
 
@@ -30,6 +30,13 @@ class ServicioBaseConocimiento:
 
     def reglas(self) -> list[ReglaInferencia]:
         return self._repo.obtener_reglas()
+
+    def pesos_de(self, hipotesis: Hipotesis) -> list[tuple[Hecho, float]]:
+        """Pesos hecho–hipótesis P(hecho | hipótesis) de una hipótesis,
+        en el orden de las preguntas."""
+        pesos = self._repo.obtener_pesos()
+        return [(op, pesos.get((hipotesis.id, op.id), 0.0))
+                for p in self.preguntas() for op in p.opciones]
 
     def valores_de(self, variable: str) -> list[str]:
         for p in self.preguntas():

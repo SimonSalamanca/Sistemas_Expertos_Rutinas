@@ -112,3 +112,4 @@ class Consulta:
     hipotesis: Hipotesis
     respuestas: list[str] = field(default_factory=list)
     probabilidad: float | None = None   # P(H | respuestas) al momento del diagnóstico
+    ranking: list[tuple[Hipotesis, float]] = field(default_factory=list)  # top 5 guardado
