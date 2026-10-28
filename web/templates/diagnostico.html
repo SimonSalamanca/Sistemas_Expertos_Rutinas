@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% from "_macros.html" import detalle_rutina %}
+{% block titulo %}Diagnóstico{% endblock %}
+{% block clase_main %}contenido contenido-chat{% endblock %}
+{% block contenido %}
+<section class="chat">
+  <header class="chat-cabecera">
+    <span class="avatar avatar-bot" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M3 10h2v4H3zm16 0h2v4h-2zM6 7h2v10H6zm10 0h2v10h-2zM9 11h6v2H9z"/></svg>
+    </span>
+    <div>
+      <strong>Asistente de entrenamiento</strong>
+      <small>{% if resultado %}Diagnóstico terminado{% else %}En línea · paso {{ paso }}{% endif %}</small>
+    </div>
+    <form method="post" action="{{ url_for('nuevo_diagnostico') }}" class="chat-acciones">
+      <button class="boton boton-suave" type="submit">Reiniciar</button>
+    </form>
+  </header>
+
+  <div class="chat-mensajes" id="mensajes">
+    <div class="mensaje mensaje-bot">
+      <div class="burbuja burbuja-bot">¡Hola, {{ usuario.nombre.split()[0] }}! Te haré unas preguntas cortas para encontrar la rutina que mejor se ajusta a ti. Elige la opción que más se parezca a tu caso.</div>
+    </div>
+
+    {% for pregunta, hecho in conversacion %}
+      <div class="mensaje mensaje-bot"><div class="burbuja burbuja-bot">{{ pregunta.texto }}</div></div>
+      <div class="mensaje mensaje-usuario"><div class="burbuja burbuja-usuario">{{ hecho.valor }}</div></div>
+    {% endfor %}
+
+    {% if pregunta %}
+      <div class="mensaje mensaje-bot">
+        <div class="burbuja burbuja-bot burbuja-actual">{{ pregunta.texto }}</div>
+      </div>
+    {% elif resultado %}
+      <div class="mensaje mensaje-bot" id="resultado">
+        <div class="burbuja burbuja-bot">
+          ¡Listo! Con tus respuestas, la rutina más probable para ti es la
+          <strong>{{ resultado.hipotesis.codigo }}</strong> ({{ resultado.probabilidad | pct }}). Aquí la tienes:
+        </div>
+      </div>
+      <div class="mensaje mensaje-bot mensaje-ancho">
+        {{ detalle_rutina(resultado.hipotesis, resultado.probabilidad) }}
+      </div>
+      <div class="mensaje mensaje-bot mensaje-ancho">
+        <section class="tarjeta">
+          <h3>¿Cómo cambió la probabilidad?</h3>
+          <ol class="evolucion">
+            {% for paso_ev, p in resultado.evolucion %}
+              <li>
+                <span class="evolucion-texto">{{ paso_ev if loop.first else 'Respondiste: ' ~ paso_ev.split(' = ')[-1] }}</span>
+                <span class="barra-prob pequena"><span style="width: {{ (p * 100) | round(1) }}%"></span></span>
+                <strong>{{ p | pct }}</strong>
+              </li>
+            {% endfor %}
+          </ol>
+          <p class="detalle">Camino del árbol que la respalda: <strong>{{ resultado.regla.codigo }}</strong> — {{ resultado.regla.texto() }}</p>
+        </section>
+      </div>
+      {% if resultado.alternativas %}
+      <div class="mensaje mensaje-bot mensaje-ancho">
+        <section class="tarjeta">
+          <h3>Otras rutinas posibles</h3>
+          <ul class="alternativas">
+            {% for h, p in resultado.alternativas %}
+              <li><a href="{{ url_for('rutina', codigo=h.codigo) }}"><span class="codigo">{{ h.codigo }}</span> {{ h.perfil() }}</a><strong>{{ p | pct }}</strong></li>
+            {% endfor %}
+          </ul>
+        </section>
+      </div>
+      {% endif %}
+      <div class="mensaje mensaje-bot">
+        <div class="burbuja burbuja-bot">Guardé esta rutina en <a href="{{ url_for('historial') }}">Mis rutinas</a>. ¿Quieres hacer otro diagnóstico?</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <footer class="chat-respuestas">
+    {% if pregunta %}
+      <form method="post" action="{{ url_for('responder') }}" class="opciones">
+        {% for op in opciones %}
+          <button class="opcion" type="submit" name="hecho" value="{{ op.id }}">{{ op.valor }}</button>
+        {% endfor %}
+      </form>
+      {% if conversacion %}
+        <form method="post" action="{{ url_for('deshacer') }}">
+          <button class="boton-texto" type="submit">↶ Cambiar mi última respuesta</button>
+        </form>
+      {% endif %}
+    {% else %}
+      <form method="post" action="{{ url_for('nuevo_diagnostico') }}" class="opciones">
+        <button class="opcion opcion-primaria" type="submit">Hacer otro diagnóstico</button>
+        <a class="opcion" href="{{ url_for('historial') }}">Ver mis rutinas</a>
+      </form>
+    {% endif %}
+  </footer>
+</section>
+<script>
+  // Muestra el último mensaje o, al terminar, el inicio del resultado
+  const m = document.getElementById('mensajes');
+  const r = document.getElementById('resultado');
+  if (m) { m.style.scrollBehavior = 'auto';
+           m.scrollTop = r ? r.offsetTop - m.offsetTop - 16 : m.scrollHeight; }
+</script>
+{% endblock %}

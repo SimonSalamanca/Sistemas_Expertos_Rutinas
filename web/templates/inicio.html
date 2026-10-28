@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import etiqueta_nivel %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<section class="hero">
+  <div>
+    <p class="sobretitulo">Hola, {{ usuario.nombre.split()[0] }}</p>
+    <h1>¿Listo para encontrar tu rutina ideal?</h1>
+    <p>El asistente te hará entre 2 y 5 preguntas sobre tu técnica, tu experiencia, tu equipo y tu objetivo, y calculará la rutina más probable para ti.</p>
+    <a class="boton boton-primario boton-grande" href="{{ url_for('diagnostico') }}">Iniciar diagnóstico</a>
+  </div>
+  <div class="hero-burbujas" aria-hidden="true">
+    <div class="burbuja burbuja-bot">¿Con qué equipo cuentas para entrenar?</div>
+    <div class="burbuja burbuja-usuario">Gimnasio completo</div>
+    <div class="burbuja burbuja-bot">¿Cuál es tu objetivo principal?</div>
+  </div>
+</section>
+
+<section class="rejilla rejilla-3">
+  <article class="tarjeta dato">
+    <span class="dato-numero">{{ total }}</span>
+    <span class="dato-texto">{{ "diagnóstico realizado" if total == 1 else "diagnósticos realizados" }}</span>
+    <a class="enlace" href="{{ url_for('historial') }}">Ver mis rutinas →</a>
+  </article>
+  <article class="tarjeta dato">
+    <span class="dato-numero">{{ total_rutinas }}</span>
+    <span class="dato-texto">rutinas en el catálogo</span>
+    <a class="enlace" href="{{ url_for('catalogo') }}">Explorar catálogo →</a>
+  </article>
+  <article class="tarjeta dato">
+    <span class="dato-numero">3</span>
+    <span class="dato-texto">niveles: principiante, intermedio y avanzado</span>
+    <a class="enlace" href="{{ url_for('como_funciona') }}">Cómo funciona →</a>
+  </article>
+</section>
+
+{% if ultima %}
+<section class="tarjeta ultima">
+  <div>
+    <p class="sobretitulo">Tu rutina más reciente · {{ ultima.fecha.strftime('%d/%m/%Y') }}</p>
+    <h2><span class="codigo">{{ ultima.hipotesis.codigo }}</span> {{ ultima.hipotesis.perfil() }}</h2>
+    <p class="detalle">Probabilidad calculada: <strong>{{ ultima.probabilidad | pct }}</strong></p>
+  </div>
+  <a class="boton" href="{{ url_for('consulta', id_consulta=ultima.id) }}">Ver detalle</a>
+</section>
+{% endif %}
+{% endblock %}

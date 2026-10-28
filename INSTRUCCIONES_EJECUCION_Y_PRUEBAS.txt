@@ -1,0 +1,300 @@
+======================================================================
+ SISTEMA EXPERTO DE RUTINAS DE ENTRENAMIENTO
+ Instrucciones de ejecución y pruebas (Windows)
+======================================================================
+
+----------------------------------------------------------------------
+1. REQUISITOS
+----------------------------------------------------------------------
+- Python 3.10 o superior. Para verificarlo:  python --version
+  (Si "python" no responde, use "py" en todos los comandos.)
+- PostgreSQL instalado y en ejecución, con pgAdmin opcional.
+- Conocer la contraseña del usuario "postgres" de su instalación.
+- Terminal recomendada: Windows Terminal o la terminal de VS Code.
+
+----------------------------------------------------------------------
+2. INSTALACIÓN
+----------------------------------------------------------------------
+1) Descomprima sistema_experto_rutinas.zip y abra una terminal dentro
+   de la carpeta sistema_experto_rutinas.
+
+2) (Recomendado) Cree y active un entorno virtual:
+      python -m venv venv
+      venv\Scripts\activate
+
+   Si PowerShell bloquea la activación, ejecute una vez:
+      Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+
+3) Instale las dependencias:
+      pip install -r requirements.txt
+
+4) Copie config_local.ejemplo.py como config_local.py y ajuste ahí los
+   datos de conexión (ese archivo no se sube a GitHub). Lo normal es cambiar
+   solo la contraseña:
+      DB_HOST = "localhost"
+      DB_PORT = 5432
+      DB_NAME = "sistema_experto_rutina"
+      DB_USER = "postgres"
+      DB_PASSWORD = "SU_CONTRASEÑA"
+
+----------------------------------------------------------------------
+3. CREAR Y CARGAR LA BASE DE DATOS
+----------------------------------------------------------------------
+      python inicializar_bd.py
+
+El script hace cinco cosas:
+- Crea la base "sistema_experto_rutina" si no existe.
+- Ejecuta sql\01_esquema.sql, que crea las tablas.
+- Ejecuta sql\02_carga_conocimiento.sql, que carga el conocimiento del
+  experto.
+- Crea las cuentas de prueba.
+- Pasa los 8 usuarios de prueba por el motor de inferencia y muestra
+  sus diagnósticos.
+
+Resultado esperado: una tabla con estos 8 diagnósticos (motor bayesiano).
+      Usuario         Hipótesis  Probabilidad  2.ª opción    Regla
+      Laura Gómez     H01        81,2 %        H02 (2,1 %)   R01
+      Andrés Rojas    H02        81,2 %        H01 (2,1 %)   R04
+      Camila Torres   H01        81,2 %        H02 (2,1 %)   R05
+      Valentina Ruiz  H06        91,7 %        H11 (2,4 %)   R10
+      Julián Pérez    H09        90,2 %        H04 (2,3 %)   R13
+      Daniela Castro  H19        89,9 %        H26 (2,3 %)   R23
+      Santiago Díaz   H21        91,7 %        H14 (2,4 %)   R25
+      Mateo Herrera   H24        89,9 %        H17 (2,3 %)   R28
+
+IMPORTANTE: cada ejecución de inicializar_bd.py borra y recrea todas las
+tablas.
+
+Verificación opcional en pgAdmin (Query Tool sobre "sistema_experto_rutina"):
+      SELECT 'pregunta', COUNT(*) FROM pregunta
+      UNION ALL SELECT 'hecho', COUNT(*) FROM hecho
+      UNION ALL SELECT 'hipotesis', COUNT(*) FROM hipotesis
+      UNION ALL SELECT 'regla_inferencia', COUNT(*) FROM regla_inferencia
+      UNION ALL SELECT 'hecho_hipotesis', COUNT(*) FROM hecho_hipotesis
+      UNION ALL SELECT 'probabilidad_condicional', COUNT(*) FROM probabilidad_condicional;
+
+Valores esperados: 5 / 15 / 26 / 30 / 118 / 390
+(o simplemente:  python probar_conexion.py)
+
+----------------------------------------------------------------------
+4. EJECUTAR EL SISTEMA
+----------------------------------------------------------------------
+Versión de consola:
+      python main.py
+
+Versión web (requiere haber instalado requirements.txt, que incluye Flask):
+      python servidor_web.py
+   y abrir en el navegador:  http://127.0.0.1:5000
+   Para detenerla: Ctrl + C en la terminal.
+
+Cuentas de prueba (todas con la contraseña: demo123)
+      Administrador ........ admin@rutinas.com
+      Experto humano ....... experto@rutinas.com
+      Ingeniero ............ ingeniero@rutinas.com
+      Usuario final ........ laura.gomez@example.com
+                             (o cualquier usuario de la Tabla 19)
+
+Notas de uso:
+- Las opciones se eligen escribiendo el número y pulsando Enter.
+- La contraseña no se ve mientras se escribe; es normal.
+- En las confirmaciones [y/n] escriba y (sí) o n (no); Enter acepta "y".
+
+======================================================================
+5. PLAN DE PRUEBAS
+======================================================================
+Marque cada caso como OK o FALLA.
+
+----------------------------------------------------------------------
+A. USUARIO FINAL: diagnóstico y cuestionario adaptativo
+----------------------------------------------------------------------
+Regístrese con "Registrarme" o inicie sesión con
+laura.gomez@example.com, y elija "Realizar diagnóstico".
+
+Caso A1. Principiante que no domina la técnica
+   Respuestas:  No -> Básico o en casa
+   Esperado:    Solo aparecen 2 preguntas; no pregunta tiempo,
+                objetivo ni fase.
+                Resultado: Regla R01 -> H01.
+
+Caso A2. Principiante que no está seguro de dominar la técnica
+   Respuestas:  No estoy seguro -> Gimnasio completo
+   Esperado:    2 preguntas. Resultado: Regla R04 -> H02.
+
+Caso A3. Domina la técnica pero entrena hace menos de 6 meses
+   Respuestas:  Sí -> Menos de 6 meses -> Básico o en casa
+   Esperado:    3 preguntas; no pregunta objetivo.
+                Resultado: Regla R05 -> H01.
+
+Caso A4. Intermedio
+   Respuestas:  Sí -> 6 meses a 2 años -> Gimnasio completo -> Hipertrofia
+   Esperado:    4 preguntas; no pregunta fase.
+                Resultado: Regla R13 -> H09.
+
+Caso A5. Avanzado con Fuerza (sí pregunta la fase)
+   Respuestas:  Sí -> Más de 2 años -> Gimnasio completo -> Fuerza
+                -> Intensidad
+   Esperado:    5 preguntas. Resultado: Regla R25 -> H21.
+
+Caso A6. Avanzado con Resistencia (no pregunta la fase)
+   Respuestas:  Sí -> Más de 2 años -> Gimnasio completo -> Resistencia
+   Esperado:    4 preguntas. Resultado: Regla R28 -> H24.
+
+En todos los casos se debe ver:
+- El panel "Rutina personalizada Hxx", con el perfil y la rutina.
+- El panel "¿Por qué esta rutina?", con las respuestas y la regla SI ...
+  ENTONCES.
+- El mensaje "La rutina quedó guardada en su historial."
+
+Caso A7. Historial
+   Menú: "Ver mi historial de rutinas"
+   Esperado:    Aparecen los diagnósticos anteriores, el más reciente
+                primero. Al escribir el número de uno, se muestra su
+                rutina y su regla.
+
+Caso A8. Opción inválida
+   Escriba un número fuera de rango, por ejemplo 9.
+   Esperado:    El sistema vuelve a pedir la opción y no se cierra.
+
+----------------------------------------------------------------------
+B. REGISTRO E INICIO DE SESIÓN (RF-01, RNF-01)
+----------------------------------------------------------------------
+Caso B1. Registrar una cuenta nueva con datos válidos
+   Esperado:    "Cuenta creada" y entra al menú de usuario final.
+
+Caso B2. Registrar una cuenta con un correo ya existente
+   Esperado:    "Ya existe una cuenta con ese correo."
+
+Caso B3. Registrar una cuenta con una contraseña de menos de 6 caracteres
+   Esperado:    "La contraseña debe tener al menos 6 caracteres."
+
+Caso B4. Iniciar sesión con una contraseña incorrecta
+   Esperado:    "Correo o contraseña incorrectos."
+
+Caso B5. Verificar que la contraseña se guarda cifrada (en pgAdmin)
+      SELECT correo, contrasena_hash FROM usuario;
+   Esperado:    Valores del tipo "pbkdf2_sha256$200000$...", nunca la
+                contraseña en texto plano.
+
+----------------------------------------------------------------------
+C. INGENIERO DEL CONOCIMIENTO (RF-04)
+----------------------------------------------------------------------
+Inicie sesión con ingeniero@rutinas.com.
+
+Caso C1. Ver hechos de una hipótesis
+   Opción "Ver hechos de una hipótesis" -> H01
+   Esperado:    3 reglas (R01, R03, R05) y 7 hechos en hecho_hipotesis.
+
+Caso C2. Rechazar una regla duplicada
+   Opción "Registrar o actualizar regla"
+      Código: R31 | Hipótesis: H01
+      P1: No | P2: No se evalúa | P3: Básico o en casa
+      P4: No se evalúa | P5: No se evalúa
+   Esperado:    "Tiene los mismos hechos que la regla R01."
+
+Caso C3. Rechazar una regla incoherente con su hipótesis
+   Código: R31 | Hipótesis: H05 (Intermedio, Básico, Resistencia)
+      P1: Sí | P2: 6 meses a 2 años | P3: Básico o en casa
+      P4: Fuerza | P5: No se evalúa
+   Esperado:    "Los hechos no corresponden a la hipótesis H05 ..."
+
+Caso C4. Rechazar una hipótesis inválida
+   Opción "Registrar o actualizar hipótesis"
+      Código: H27 | Nivel: Avanzado | Equipo: Básico o en casa
+      Objetivo: Resistencia | Descripción: cualquier texto
+   Esperado:    No pide fase. Se guarda correctamente.
+   Repita con el código "27", sin la H.
+   Esperado:    "El código de la hipótesis debe tener la forma H00."
+
+Caso C5. Registrar una regla nueva y usarla de inmediato
+   Registre la regla R31 -> H27 con:
+      Sí | Más de 2 años | Básico o en casa | Resistencia
+   Esperado:    "Tiene los mismos hechos que la regla R21."
+   Esto prueba que el sistema evita conflictos entre reglas.
+
+Caso C6. Eliminar una hipótesis sin diagnósticos
+   Opción "Eliminar hipótesis" -> H27
+   Esperado:    "Hipótesis H27 eliminada."
+
+Caso C7. Impedir la eliminación de conocimiento ya usado
+   Opción "Eliminar regla" -> R01
+   Esperado:    "No se puede eliminar la regla R01: tiene diagnósticos
+                de usuarios asociados."
+
+----------------------------------------------------------------------
+D. EXPERTO HUMANO
+----------------------------------------------------------------------
+Inicie sesión con experto@rutinas.com.
+
+Caso D1. "Ver hipótesis"
+   Esperado:    Tabla con 26 hipótesis.
+
+Caso D2. "Ver reglas de inferencia"
+   Esperado:    Tabla con 30 reglas en formato SI ... Y ... ENTONCES.
+
+Caso D3. "Ver diagnósticos de los usuarios"
+   Esperado:    Todos los diagnósticos, incluido el usuario que los hizo.
+
+Caso D4. Comprobar que el experto no puede modificar la base
+   Esperado:    Su menú no tiene opciones de registro ni eliminación.
+
+----------------------------------------------------------------------
+E. ADMINISTRADOR
+----------------------------------------------------------------------
+Inicie sesión con admin@rutinas.com.
+
+Caso E1. "Ver usuarios"
+   Esperado:    Lista de 11 usuarios con su rol, más los que haya
+                registrado.
+
+Caso E2. "Cambiar rol de un usuario"
+   Pase la cuenta creada en B1 al rol "experto".
+   Cierre sesión y vuelva a entrar con esa cuenta.
+   Esperado:    Ahora aparece el menú del experto.
+
+----------------------------------------------------------------------
+F. VERIFICACIÓN EN LA BASE DE DATOS (pgAdmin)
+----------------------------------------------------------------------
+Caso F1. Respuestas de una consulta
+      SELECT c.id_consulta, u.nombre, p.codigo, he.valor
+        FROM respuesta_pregunta rp
+        JOIN consulta c  ON c.id_consulta = rp.id_consulta
+        JOIN usuario u   ON u.id_usuario  = c.id_usuario
+        JOIN pregunta p  ON p.id_pregunta = rp.id_pregunta
+        JOIN hecho he    ON he.id_hecho   = rp.id_hecho
+       ORDER BY c.id_consulta, p.orden;
+   Esperado:    Solo se guardan las preguntas que realmente se hicieron.
+
+Caso F2. Hechos que sustentan cada hipótesis
+      SELECT hi.codigo AS hipotesis, r.codigo AS regla,
+             string_agg(p.variable || ' = ' || he.valor, ' Y '
+                        ORDER BY p.orden) AS hechos
+        FROM hecho_hipotesis hh
+        JOIN hipotesis hi       ON hi.id_hipotesis = hh.id_hipotesis
+        JOIN regla_inferencia r ON r.id_regla      = hh.id_regla
+        JOIN hecho he           ON he.id_hecho     = hh.id_hecho
+        JOIN pregunta p         ON p.id_pregunta   = he.id_pregunta
+       GROUP BY hi.codigo, r.codigo
+       ORDER BY r.codigo;
+   Esperado:    30 filas, iguales a la Tabla 15 del documento.
+
+----------------------------------------------------------------------
+6. PROBLEMAS FRECUENTES
+----------------------------------------------------------------------
+- "No se pudo conectar a PostgreSQL"
+     El servicio de PostgreSQL no está iniciado, o el puerto o la
+     contraseña de config_local.py no coinciden. Revise el servicio en
+     services.msc (postgresql-x64-XX).
+
+- "password authentication failed for user postgres"
+     La contraseña en config_local.py es incorrecta.
+
+- "ModuleNotFoundError: No module named 'rich'" o "'psycopg'"
+     Falta activar el entorno virtual (venv\Scripts\activate) o
+     ejecutar pip install -r requirements.txt.
+
+- Las tildes o los recuadros se ven mal
+     Use Windows Terminal o la terminal de VS Code. En el CMD clásico,
+     ejecute antes:  chcp 65001
+
+- Se quiere reiniciar todo
+     Vuelva a ejecutar: python inicializar_bd.py

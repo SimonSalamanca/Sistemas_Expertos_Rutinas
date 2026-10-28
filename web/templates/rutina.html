@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import detalle_rutina %}
+{% block titulo %}Rutina {{ h.codigo }}{% endblock %}
+{% block contenido %}
+<a class="volver" href="{{ url_for('catalogo') }}">← Catálogo</a>
+<div class="rejilla rejilla-lateral">
+  {{ detalle_rutina(h) }}
+  <aside class="tarjeta">
+    <h3>¿A quién se recomienda?</h3>
+    <p>El sistema llega a esta rutina por {{ reglas | length }} camino{{ 's' if reglas | length != 1 }} del árbol de decisión:</p>
+    {% for r in reglas %}
+      <p class="etiqueta-campo">{{ r.codigo }}</p>
+      <ul class="lista-simple">{% for e in r.hechos %}<li>{{ e.valor }}</li>{% endfor %}</ul>
+    {% endfor %}
+    <p class="detalle">Probabilidad a priori: {{ h.probabilidad_previa | pct }}</p>
+    <a class="boton boton-primario" href="{{ url_for('diagnostico') }}">Hacer mi diagnóstico</a>
+  </aside>
+</div>
+{% endblock %}

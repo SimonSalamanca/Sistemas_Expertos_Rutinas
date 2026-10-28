@@ -1,0 +1,124 @@
+# Sistema experto de rutinas de entrenamiento
+
+Aplicación de consola en Python, con arquitectura POO a tres capas y base de conocimiento en PostgreSQL.
+
+## Requisitos
+
+- Python 3.10 o superior
+- PostgreSQL (probado con la versión 16)
+
+## Instalación
+
+```bash
+pip install -r requirements.txt
+```
+
+Copie `config_local.ejemplo.py` como `config_local.py` y escriba ahí sus datos de conexión (por defecto `localhost:5432`, la base `sistema_experto_rutina` y el usuario `postgres`). `config_local.py` está en `.gitignore`, así la contraseña no se sube al repositorio. También puede usar las variables de entorno `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`.
+
+## Puesta en marcha
+
+```bash
+python inicializar_bd.py   # crea la base, carga el conocimiento y los usuarios de prueba
+python main.py             # inicia el sistema
+```
+
+`inicializar_bd.py` borra y vuelve a crear las tablas cada vez que se ejecuta.
+
+Si se prefiere pgAdmin, se pueden ejecutar `sql/01_esquema.sql` y `sql/02_carga_conocimiento.sql` en ese orden. En ese caso los usuarios se crean desde la opción **Registrarme**, y los roles se asignan como administrador o con un `UPDATE` a la tabla `usuario`.
+
+En Windows se recomienda usar Windows Terminal o la terminal de VS Code para ver los colores y las tildes correctamente.
+
+## Cuentas de prueba
+
+La contraseña de todas es `demo123`.
+
+| Rol | Correo |
+|---|---|
+| Administrador | admin@rutinas.com |
+| Experto humano | experto@rutinas.com |
+| Ingeniero del conocimiento | ingeniero@rutinas.com |
+| Usuario final | laura.gomez@example.com (y los demás usuarios de la Tabla 19) |
+
+## Arquitectura
+
+```
+presentacion/   Capa de presentación: menús de consola por rol (rich)
+negocio/        Capa de lógica de negocio
+  entidades.py              Hecho, Pregunta, Hipotesis, ReglaInferencia, BaseHechos...
+  motor_inferencia.py       Inferencia bayesiana y selección de preguntas
+  servicio_*.py             Casos de uso (diagnóstico, base de conocimiento, usuarios)
+  repositorios.py           Interfaces que debe cumplir la capa de datos
+datos/          Capa de datos: repositorios sobre PostgreSQL (psycopg)
+sql/            Esquema y carga del conocimiento del experto
+main.py         Crea los objetos de cada capa y los conecta
+```
+
+Cada capa solo conoce a la de abajo. La capa de negocio depende de las interfaces de `repositorios.py` y no de PostgreSQL, así que se puede cambiar la base de conocimiento sin modificar el motor (RNF-04).
+
+## Modelo de la base de conocimiento
+
+```
+pregunta 1──N hecho N──M hipotesis
+                   \         /
+                 hecho_hipotesis ──N:1── regla_inferencia
+```
+
+- **hecho**: cada opción de respuesta, del tipo variable = valor. Son 15.
+- **hipotesis**: las 26 rutinas posibles.
+- **hecho_hipotesis**: rompe el muchos a muchos. Cada fila indica que un hecho sustenta una hipótesis dentro de una regla. Tiene 118 filas.
+- **regla_inferencia**: agrupa los hechos de un mismo camino del árbol (R01 a R30). Sus hechos se unen con Y. Una hipótesis puede tener varias reglas; H01 y H02 tienen tres cada una.
+- **probabilidad_condicional**: verosimilitud P(hecho | hipótesis), 26 × 15 = 390 filas. Junto con `hipotesis.probabilidad_previa` forma el modelo bayesiano.
+- **consulta** y **respuesta_pregunta**: guardan cada diagnóstico (rutina, probabilidad a posteriori y camino del árbol) y las respuestas del usuario, que forman su base de hechos.
+
+El motor también decide qué preguntar. Solo muestra una pregunta si alguna regla que todavía es posible necesita un hecho de esa pregunta. Por eso el cuestionario es adaptativo sin reglas de navegación aparte.
+
+## Motor de inferencia bayesiano
+
+El sistema razona con probabilidades. Cada rutina H tiene:
+
+- **P(H)**, probabilidad a priori: reglas de H / total de reglas. H01 y H02 tienen 3/30 (tres caminos del árbol llegan a ellas) y las demás 1/30.
+- **P(E | H)**, verosimilitud de cada respuesta E. Se deriva de las reglas con la confiabilidad `c` de cada pregunta (0,95 por defecto):
+  - si las reglas de H evalúan la pregunta: `P(E|H) = c · (reglas de H con E / reglas de H con la pregunta) + (1 − c) / opciones`
+  - si no la evalúan: `P(E|H) = 1 / opciones` (la respuesta no informa sobre H).
+
+Con cada respuesta se aplica el teorema de Bayes a las 26 rutinas:
+
+```
+P(H | E1..En) = P(H) · Π P(Ei | H)  /  Σk P(Hk) · Π P(Ei | Hk)
+```
+
+El resultado es la rutina con mayor probabilidad a posteriori, las 2 siguientes como alternativas y la evolución de la probabilidad respuesta por respuesta. La regla (camino del árbol) que coincide con las respuestas se muestra como explicación.
+
+Las probabilidades se calculan en PostgreSQL con la función `recalcular_probabilidades()`. Se ejecuta al cargar el conocimiento y cada vez que el ingeniero crea o elimina una hipótesis o una regla, así el motor no se modifica (RNF-04). Para cambiar la confianza en una pregunta:
+
+```sql
+UPDATE pregunta SET confiabilidad = 0.90 WHERE codigo = 'P1';
+SELECT recalcular_probabilidades();
+```
+
+## Ejecutar desde Visual Studio / VS Code
+
+1. Doble clic en `preparar_entorno.bat`: crea `venv`, instala dependencias, prueba la conexión y, si la base está vacía, la inicializa.
+2. **Visual Studio 2022** (con la carga de trabajo "Desarrollo de Python"): abra `sistema_experto_rutinas.sln` y pulse F5 (inicia `main.py`).
+3. **VS Code**: abra la carpeta, elija en "Ejecutar y depurar" una de las configuraciones: *Probar conexión*, *Inicializar base de datos* o *Ejecutar sistema experto*.
+
+`python probar_conexion.py` verifica en cualquier momento credenciales, existencia de la base y datos cargados.
+
+## Interfaz web
+
+Además de la consola, el sistema tiene una interfaz web (Flask) que usa exactamente los mismos servicios y el mismo motor bayesiano.
+
+```bash
+python servidor_web.py      # luego abrir http://127.0.0.1:5000
+```
+
+Secciones:
+
+- **Inicio**: acceso rápido al diagnóstico, resumen y última rutina.
+- **Diagnóstico**: el cuestionario con apariencia de chat; muestra la rutina, su probabilidad, cómo cambió con cada respuesta y las alternativas. Se guarda en el historial.
+- **Mis rutinas**: historial de diagnósticos con su detalle.
+- **Catálogo**: las 26 rutinas, filtrables por nivel y equipo.
+- **Cómo funciona**: niveles, preguntas y significado del porcentaje.
+- **Gestión** (experto, ingeniero y administrador): base de conocimiento, diagnósticos de todos los usuarios y, para el administrador, usuarios y roles. La edición de reglas sigue en la consola.
+
+Archivos: `servidor_web.py` (arranque), `web/app.py` (rutas), `web/templates/` (HTML) y `web/static/estilos.css` (CSS).

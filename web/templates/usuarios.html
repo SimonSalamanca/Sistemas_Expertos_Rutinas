@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<div class="encabezado-seccion">
+  <div>
+    <h1>Usuarios y roles</h1>
+    <p>{{ usuarios | length }} cuentas registradas.</p>
+  </div>
+</div>
+<div class="tabla-contenedor tarjeta">
+  <table class="tabla">
+    <thead><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Registro</th><th>Rol</th></tr></thead>
+    <tbody>
+      {% for u in usuarios %}
+        <tr>
+          <td class="numero">{{ u.id }}</td>
+          <td>{{ u.nombre }}</td>
+          <td>{{ u.correo }}</td>
+          <td class="numero">{{ u.fecha_registro.strftime('%d/%m/%Y') if u.fecha_registro }}</td>
+          <td>
+            <form method="post" class="form-rol">
+              <input type="hidden" name="id_usuario" value="{{ u.id }}">
+              <select name="rol" aria-label="Rol de {{ u.nombre }}">
+                {% for r in roles %}<option value="{{ r }}" {{ 'selected' if r == u.rol }}>{{ NOMBRE_ROL[r] }}</option>{% endfor %}
+              </select>
+              <button class="boton boton-suave" type="submit">Guardar</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

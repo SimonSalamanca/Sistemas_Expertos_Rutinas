@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Sistema experto{% endblock %} · Rutinas de entrenamiento</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body class="{% block clase_body %}{% endblock %}">
+{% if usuario %}
+<header class="barra">
+  <a class="marca" href="{{ url_for('inicio') }}">
+    <span class="marca-icono" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M3 10h2v4H3zm16 0h2v4h-2zM6 7h2v10H6zm10 0h2v10h-2zM9 11h6v2H9z"/></svg>
+    </span>
+    <span class="marca-texto">Rutinas<strong>Expert</strong></span>
+  </a>
+  <input type="checkbox" id="menu-movil" class="menu-movil" aria-label="Abrir menú">
+  <label for="menu-movil" class="menu-boton" aria-hidden="true"><span></span></label>
+  <nav class="menu">
+    {% set e = request.endpoint %}
+    <a href="{{ url_for('inicio') }}" class="{{ 'activo' if e == 'inicio' }}">Inicio</a>
+    <a href="{{ url_for('diagnostico') }}" class="{{ 'activo' if e == 'diagnostico' }}">Diagnóstico</a>
+    <a href="{{ url_for('historial') }}" class="{{ 'activo' if e in ('historial', 'consulta') }}">Mis rutinas</a>
+    <a href="{{ url_for('catalogo') }}" class="{{ 'activo' if e in ('catalogo', 'rutina') }}">Catálogo</a>
+    <a href="{{ url_for('como_funciona') }}" class="{{ 'activo' if e == 'como_funciona' }}">Cómo funciona</a>
+    {% if usuario.rol in ROLES_CONOCIMIENTO %}
+      <details class="submenu">
+        <summary class="{{ 'activo' if e in ('conocimiento', 'diagnosticos', 'usuarios') }}">Gestión</summary>
+        <div class="submenu-panel">
+          <a href="{{ url_for('conocimiento') }}" class="{{ 'activo' if e == 'conocimiento' }}">Base de conocimiento</a>
+          <a href="{{ url_for('diagnosticos') }}" class="{{ 'activo' if e == 'diagnosticos' }}">Diagnósticos de usuarios</a>
+          {% if usuario.rol == 'administrador' %}
+            <a href="{{ url_for('usuarios') }}" class="{{ 'activo' if e == 'usuarios' }}">Usuarios y roles</a>
+          {% endif %}
+        </div>
+      </details>
+    {% endif %}
+  </nav>
+  <div class="perfil">
+    <span class="avatar" aria-hidden="true">{{ usuario.nombre[:1] | upper }}</span>
+    <span class="perfil-datos">
+      <strong>{{ usuario.nombre }}</strong>
+      <small>{{ NOMBRE_ROL[usuario.rol] }}</small>
+    </span>
+    <a class="salir" href="{{ url_for('salir') }}">Salir</a>
+  </div>
+</header>
+{% endif %}
+
+<main class="{% block clase_main %}contenido{% endblock %}">
+  {% with mensajes = get_flashed_messages(with_categories=true) %}
+    {% for tipo, texto in mensajes %}
+      <div class="aviso aviso-{{ tipo }}" role="alert">{{ texto }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block contenido %}{% endblock %}
+</main>
+
+{% if usuario %}
+<footer class="pie">Sistema experto de rutinas de entrenamiento · Universidad Manuela Beltrán · Sistemas Expertos</footer>
+<script>
+  // Cierra el menú "Gestión" al hacer clic fuera de él
+  document.addEventListener('click', (ev) => {
+    document.querySelectorAll('details.submenu[open]').forEach((d) => {
+      if (!d.contains(ev.target)) d.removeAttribute('open');
+    });
+  });
+</script>
+{% endif %}
+</body>
+</html>

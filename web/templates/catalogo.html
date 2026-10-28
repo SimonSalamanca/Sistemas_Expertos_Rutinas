@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tarjeta_rutina %}
+{% block titulo %}Catálogo de rutinas{% endblock %}
+{% block contenido %}
+<div class="encabezado-seccion">
+  <div>
+    <h1>Catálogo de rutinas</h1>
+    <p>Las {{ rutinas | length }} rutinas{% if nivel or equipo %} que coinciden con el filtro{% endif %} de la base de conocimiento, diseñadas con el entrenador experto.</p>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="filtro-grupo" role="group" aria-label="Nivel">
+    <a class="filtro {{ 'activo' if not nivel }}" href="{{ url_for('catalogo', equipo=equipo or None) }}">Todos los niveles</a>
+    {% for n in niveles %}
+      <a class="filtro {{ 'activo' if nivel == n }}" href="{{ url_for('catalogo', nivel=n, equipo=equipo or None) }}">{{ n }}</a>
+    {% endfor %}
+  </div>
+  <div class="filtro-grupo" role="group" aria-label="Equipo">
+    <a class="filtro {{ 'activo' if not equipo }}" href="{{ url_for('catalogo', nivel=nivel or None) }}">Cualquier equipo</a>
+    {% for eq in equipos %}
+      <a class="filtro {{ 'activo' if equipo == eq }}" href="{{ url_for('catalogo', nivel=nivel or None, equipo=eq) }}">{{ eq }}</a>
+    {% endfor %}
+  </div>
+</form>
+
+<div class="rejilla rejilla-3">
+  {% for h in rutinas %}{{ tarjeta_rutina(h) }}{% endfor %}
+</div>
+{% endblock %}

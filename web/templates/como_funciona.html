@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Cómo funciona{% endblock %}
+{% block contenido %}
+<div class="encabezado-seccion">
+  <div>
+    <h1>Cómo funciona</h1>
+    <p>El sistema experto reúne el conocimiento de un entrenador y lo aplica a tus respuestas para recomendarte una rutina.</p>
+  </div>
+</div>
+
+<section class="pasos">
+  <article class="tarjeta paso"><span class="paso-numero">1</span><h3>Respondes</h3><p>Entre 2 y 5 preguntas: solo se muestran las que aplican a tu caso.</p></article>
+  <article class="tarjeta paso"><span class="paso-numero">2</span><h3>El sistema calcula</h3><p>Con cada respuesta actualiza la probabilidad de las 26 rutinas usando el teorema de Bayes.</p></article>
+  <article class="tarjeta paso"><span class="paso-numero">3</span><h3>Recibes tu rutina</h3><p>La más probable, con su porcentaje, el porqué y otras alternativas cercanas.</p></article>
+</section>
+
+<h2 class="titulo-bloque">Niveles de experiencia</h2>
+<div class="rejilla rejilla-3">
+  <article class="tarjeta"><span class="chip chip-principiante">Principiante</span><p>No domina la técnica básica, no está seguro de dominarla, o la domina pero entrena hace menos de 6 meses. Rutina de base que solo cambia según el equipo.</p></article>
+  <article class="tarjeta"><span class="chip chip-intermedio">Intermedio</span><p>Domina la técnica y entrena de forma constante entre 6 meses y 2 años. Rutina según el objetivo y el equipo.</p></article>
+  <article class="tarjeta"><span class="chip chip-avanzado">Avanzado</span><p>Domina la técnica y entrena hace más de 2 años. Rutina según objetivo, equipo y, en fuerza o hipertrofia, la fase (volumen o intensidad).</p></article>
+</div>
+
+<h2 class="titulo-bloque">Las preguntas</h2>
+<section class="tarjeta">
+  <ol class="lista-preguntas">
+    {% for p in preguntas %}
+      <li><strong>{{ p.texto }}</strong><span>{{ p.opciones | map(attribute='valor') | join(' · ') }}</span></li>
+    {% endfor %}
+  </ol>
+</section>
+
+<h2 class="titulo-bloque">¿Qué significa el porcentaje?</h2>
+<section class="tarjeta">
+  <p>Es la probabilidad a posteriori de la rutina, calculada a partir del conocimiento del experto (el árbol de decisión) y de la confianza que el sistema le asigna a cada respuesta. Indica qué tan bien explica esa rutina tus respuestas frente a las demás; no es una estadística medida sobre otras personas.</p>
+</section>
+{% endblock %}

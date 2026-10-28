@@ -1,0 +1,37 @@
+{% macro etiqueta_nivel(nivel) -%}
+  <span class="chip chip-{{ nivel | lower }}">{{ nivel }}</span>
+{%- endmacro %}
+
+{% macro tarjeta_rutina(h, enlace=True) -%}
+  {% set frases = h.descripcion_rutina | vinetas %}
+  <article class="tarjeta rutina-tarjeta">
+    <div class="rutina-cabecera">
+      <span class="codigo">{{ h.codigo }}</span>
+      {{ etiqueta_nivel(h.nivel) }}
+      <span class="chip chip-frecuencia">{{ frases[0] | replace('.', '') }}</span>
+    </div>
+    <h3>{{ h.objetivo or 'Rutina de base' }}{% if h.fase %} · {{ h.fase }}{% endif %}</h3>
+    <p class="detalle">{{ h.equipo }}</p>
+    <p class="resumen">{{ frases[1] if frases | length > 1 else frases[0] }}</p>
+    {% if enlace %}<a class="enlace" href="{{ url_for('rutina', codigo=h.codigo) }}">Ver rutina →</a>{% endif %}
+  </article>
+{%- endmacro %}
+
+{% macro detalle_rutina(h, probabilidad=None) -%}
+  <section class="tarjeta rutina-detalle">
+    <div class="rutina-cabecera">
+      <span class="codigo">{{ h.codigo }}</span>
+      {{ etiqueta_nivel(h.nivel) }}
+    </div>
+    <h2>{{ h.perfil() }}</h2>
+    {% if probabilidad is not none %}
+      <div class="probabilidad">
+        <div class="probabilidad-texto"><span>Probabilidad</span><strong>{{ probabilidad | pct }}</strong></div>
+        <div class="barra-prob"><span style="width: {{ (probabilidad * 100) | round(1) }}%"></span></div>
+      </div>
+    {% endif %}
+    <ul class="lista-rutina">
+      {% for frase in h.descripcion_rutina | vinetas %}<li>{{ frase }}</li>{% endfor %}
+    </ul>
+  </section>
+{%- endmacro %}

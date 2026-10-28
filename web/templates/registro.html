@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Registro{% endblock %}
+{% block clase_main %}acceso{% endblock %}
+{% block contenido %}
+<div class="acceso-panel">
+  <section class="acceso-portada">
+    <span class="marca-icono grande" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M3 10h2v4H3zm16 0h2v4h-2zM6 7h2v10H6zm10 0h2v10h-2zM9 11h6v2H9z"/></svg>
+    </span>
+    <h1>Crea tu cuenta</h1>
+    <p>Con tu cuenta podrás hacer el diagnóstico las veces que quieras y consultar todas tus rutinas.</p>
+  </section>
+  <section class="acceso-formulario">
+    <h2>Registro</h2>
+    <form method="post" class="formulario">
+      <label>Nombre completo
+        <input type="text" name="nombre" value="{{ datos.get('nombre', '') }}" required minlength="3" autofocus>
+      </label>
+      <label>Correo
+        <input type="email" name="correo" value="{{ datos.get('correo', '') }}" required autocomplete="username">
+      </label>
+      <label>Contraseña <small>(mínimo 6 caracteres)</small>
+        <input type="password" name="contrasena" required minlength="6" autocomplete="new-password">
+      </label>
+      <label>Repite la contraseña
+        <input type="password" name="confirmacion" required minlength="6" autocomplete="new-password">
+      </label>
+      <button class="boton boton-primario" type="submit">Crear cuenta</button>
+    </form>
+    <p class="nota">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
+  </section>
+</div>
+{% endblock %}

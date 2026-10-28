@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import etiqueta_nivel %}
+{% block titulo %}Mis rutinas{% endblock %}
+{% block contenido %}
+<div class="encabezado-seccion">
+  <div>
+    <h1>Mis rutinas</h1>
+    <p>Todas las rutinas que el sistema te ha recomendado, de la más reciente a la más antigua.</p>
+  </div>
+  <a class="boton boton-primario" href="{{ url_for('diagnostico') }}">Nuevo diagnóstico</a>
+</div>
+
+{% if consultas %}
+<div class="rejilla rejilla-2">
+  {% for c in consultas %}
+  <a class="tarjeta historial-item" href="{{ url_for('consulta', id_consulta=c.id) }}">
+    <div class="rutina-cabecera">
+      <span class="codigo">{{ c.hipotesis.codigo }}</span>
+      {{ etiqueta_nivel(c.hipotesis.nivel) }}
+      <span class="fecha">{{ c.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+    </div>
+    <h3>{{ c.hipotesis.perfil() }}</h3>
+    <p class="detalle">Tus respuestas: {{ c.respuestas | join(' · ') }}</p>
+    <div class="probabilidad">
+      <div class="probabilidad-texto"><span>Probabilidad</span><strong>{{ c.probabilidad | pct }}</strong></div>
+      <div class="barra-prob"><span style="width: {{ ((c.probabilidad or 0) * 100) | round(1) }}%"></span></div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<section class="tarjeta vacio">
+  <h2>Aún no tienes rutinas</h2>
+  <p>Haz tu primer diagnóstico y la rutina recomendada aparecerá aquí.</p>
+  <a class="boton boton-primario" href="{{ url_for('diagnostico') }}">Iniciar diagnóstico</a>
+</section>
+{% endif %}
+{% endblock %}

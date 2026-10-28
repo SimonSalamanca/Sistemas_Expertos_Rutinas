@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}Diagnósticos{% endblock %}
+{% block contenido %}
+<div class="encabezado-seccion">
+  <div>
+    <h1>Diagnósticos de los usuarios</h1>
+    <p>{{ consultas | length }} diagnósticos registrados.</p>
+  </div>
+</div>
+<div class="tabla-contenedor tarjeta">
+  <table class="tabla">
+    <thead><tr><th>Fecha</th><th>Usuario</th><th>Respuestas</th><th>Rutina</th><th>Probabilidad</th><th></th></tr></thead>
+    <tbody>
+      {% for c in consultas %}
+        <tr>
+          <td class="numero">{{ c.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>{{ c.usuario }}</td>
+          <td>{{ c.respuestas | join(' · ') }}</td>
+          <td><span class="codigo">{{ c.hipotesis.codigo }}</span> {{ c.hipotesis.perfil() }}</td>
+          <td class="numero">{{ c.probabilidad | pct }}</td>
+          <td><a class="enlace" href="{{ url_for('consulta', id_consulta=c.id) }}">Ver</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">No hay diagnósticos registrados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

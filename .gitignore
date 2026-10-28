@@ -1,0 +1,19 @@
+# Entorno virtual y caché de Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Datos de conexión locales (contienen la contraseña)
+config_local.py
+.env
+
+# Archivos generados
+resultado_conexion.txt
+
+# Visual Studio / VS Code (archivos de usuario)
+.vs/
+*.user
+
+# Capturas guardadas por Claude
+Claude outputs/

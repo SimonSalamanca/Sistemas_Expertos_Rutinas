@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import etiqueta_nivel %}
+{% block titulo %}Base de conocimiento{% endblock %}
+{% block contenido %}
+<div class="encabezado-seccion">
+  <div>
+    <h1>Base de conocimiento</h1>
+    <p>{{ hipotesis | length }} hipótesis y {{ reglas | length }} reglas de inferencia. La creación y edición de reglas sigue disponible en la aplicación de consola (rol ingeniero).</p>
+  </div>
+</div>
+
+<h2 class="titulo-bloque">Hipótesis</h2>
+<div class="tabla-contenedor tarjeta">
+  <table class="tabla">
+    <thead><tr><th>Código</th><th>Nivel</th><th>Equipo</th><th>Objetivo</th><th>Fase</th><th>P. a priori</th></tr></thead>
+    <tbody>
+      {% for h in hipotesis %}
+        <tr>
+          <td><a href="{{ url_for('rutina', codigo=h.codigo) }}" class="codigo">{{ h.codigo }}</a></td>
+          <td>{{ etiqueta_nivel(h.nivel) }}</td><td>{{ h.equipo }}</td>
+          <td>{{ h.objetivo or '—' }}</td><td>{{ h.fase or '—' }}</td>
+          <td class="numero">{{ h.probabilidad_previa | pct }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h2 class="titulo-bloque">Reglas de inferencia</h2>
+<div class="tabla-contenedor tarjeta">
+  <table class="tabla">
+    <thead><tr><th>Regla</th><th>SI (hechos unidos con Y)</th><th>ENTONCES</th></tr></thead>
+    <tbody>
+      {% for r in reglas %}
+        <tr>
+          <td class="codigo">{{ r.codigo }}</td>
+          <td>{% for e in r.hechos %}<span class="hecho">{{ e.variable }} = {{ e.valor }}</span>{% endfor %}</td>
+          <td><a href="{{ url_for('rutina', codigo=r.hipotesis.codigo) }}" class="codigo">{{ r.hipotesis.codigo }}</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

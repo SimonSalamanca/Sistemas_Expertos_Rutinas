@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import detalle_rutina %}
+{% block titulo %}Rutina {{ c.hipotesis.codigo }}{% endblock %}
+{% block contenido %}
+<a class="volver" href="{{ url_for('historial') }}">← Mis rutinas</a>
+<div class="encabezado-seccion">
+  <div>
+    <h1>Diagnóstico del {{ c.fecha.strftime('%d/%m/%Y') }}</h1>
+    <p>{% if c.usuario != usuario.nombre %}{{ c.usuario }} · {% endif %}{{ c.fecha.strftime('%H:%M') }}</p>
+  </div>
+</div>
+<div class="rejilla rejilla-lateral">
+  {{ detalle_rutina(c.hipotesis, c.probabilidad) }}
+  <aside class="tarjeta">
+    <h3>¿Por qué esta rutina?</h3>
+    <p class="etiqueta-campo">Respuestas</p>
+    <ul class="lista-simple">{% for r in c.respuestas %}<li>{{ r }}</li>{% endfor %}</ul>
+    <p class="etiqueta-campo">Camino del árbol que la respalda</p>
+    <p class="regla">{{ c.regla }}</p>
+  </aside>
+</div>
+{% endblock %}
