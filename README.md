@@ -1,11 +1,11 @@
 # Sistema experto de rutinas de entrenamiento
 
-Aplicación de consola en Python, con arquitectura POO a tres capas y base de conocimiento en PostgreSQL.
+Aplicación en Python (consola y web), con arquitectura POO a tres capas, motor de inferencia bayesiano y base de conocimiento en PostgreSQL.
 
 ## Requisitos
 
 - Python 3.10 o superior
-- PostgreSQL (probado con la versión 16)
+- PostgreSQL 16 o superior
 
 ## Instalación
 
@@ -13,13 +13,24 @@ Aplicación de consola en Python, con arquitectura POO a tres capas y base de co
 pip install -r requirements.txt
 ```
 
-Copie `config_local.ejemplo.py` como `config_local.py` y escriba ahí sus datos de conexión (por defecto `localhost:5432`, la base `sistema_experto_rutina` y el usuario `postgres`). `config_local.py` está en `.gitignore`, así la contraseña no se sube al repositorio. También puede usar las variables de entorno `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`.
+Cree en la raíz del proyecto un archivo `config_local.py` con sus datos de conexión:
+
+```python
+DB_HOST = "localhost"
+DB_PORT = 5432
+DB_NAME = "sistema_experto_rutina"
+DB_USER = "postgres"
+DB_PASSWORD = "SU_CONTRASEÑA"
+```
+
+`config_local.py` está en `.gitignore`, así la contraseña no se sube al repositorio. También puede usar las variables de entorno `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`.
 
 ## Puesta en marcha
 
 ```bash
 python inicializar_bd.py   # crea la base, carga el conocimiento y los usuarios de prueba
-python main.py             # inicia el sistema
+python main.py             # inicia el sistema (consola)
+python servidor_web.py     # o la versión web: http://127.0.0.1:5000
 ```
 
 `inicializar_bd.py` borra y vuelve a crear las tablas cada vez que se ejecuta.
@@ -97,13 +108,9 @@ UPDATE pregunta SET confiabilidad = 0.90 WHERE codigo = 'P1';
 SELECT recalcular_probabilidades();
 ```
 
-## Ejecutar desde Visual Studio / VS Code
+## Ejecutar desde VS Code
 
-1. Doble clic en `preparar_entorno.bat`: crea `venv`, instala dependencias, prueba la conexión y, si la base está vacía, la inicializa.
-2. **Visual Studio 2022** (con la carga de trabajo "Desarrollo de Python"): abra `sistema_experto_rutinas.sln` y pulse F5 (inicia `main.py`).
-3. **VS Code**: abra la carpeta, elija en "Ejecutar y depurar" una de las configuraciones: *Probar conexión*, *Inicializar base de datos* o *Ejecutar sistema experto*.
-
-`python probar_conexion.py` verifica en cualquier momento credenciales, existencia de la base y datos cargados.
+Renombre la carpeta `config_vscode` a `.vscode` y abra la carpeta del proyecto en VS Code. En "Ejecutar y depurar" aparecen las configuraciones *Inicializar base de datos*, *Ejecutar sistema experto* (consola) y *Ejecutar interfaz web*. Elija como intérprete el Python donde instaló `requirements.txt`.
 
 ## Interfaz web
 

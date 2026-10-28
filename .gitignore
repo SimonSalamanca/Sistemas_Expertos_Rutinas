@@ -8,12 +8,6 @@ __pycache__/
 config_local.py
 .env
 
-# Archivos generados
-resultado_conexion.txt
-
-# Visual Studio / VS Code (archivos de usuario)
+# Archivos de usuario del editor
 .vs/
 *.user
-
-# Capturas guardadas por Claude
-Claude outputs/

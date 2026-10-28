@@ -2,15 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "1. Probar conexión a PostgreSQL",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/probar_conexion.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "2. Inicializar base de datos",
+      "name": "1. Inicializar base de datos",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/inicializar_bd.py",
@@ -18,7 +10,7 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "3. Ejecutar sistema experto",
+      "name": "2. Ejecutar sistema experto",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/main.py",
@@ -26,7 +18,7 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "4. Ejecutar interfaz web",
+      "name": "3. Ejecutar interfaz web",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/servidor_web.py",

@@ -2,8 +2,8 @@
 
 Orden de prioridad:
   1. Variables de entorno (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD).
-  2. El archivo config_local.py (no se sube a GitHub; copie
-     config_local.ejemplo.py como config_local.py y ponga sus datos).
+  2. El archivo config_local.py (no se sube a GitHub). Debe definir
+     DB_HOST, DB_PORT, DB_NAME, DB_USER y DB_PASSWORD; ver README.md.
   3. Los valores por defecto de abajo.
 """
 import os
